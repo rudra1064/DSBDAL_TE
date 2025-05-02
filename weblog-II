@@ -35,16 +35,6 @@ val logs_df = cleaned_df.select($"*", to_timestamp(toTimestamp($"timestamp")).al
 logs_df.printSchema()
 logs_df.show(2)
 
-//Top 5 host
-df1.groupBy("host").count().sort(desc("count")).show(10, false)
-
-//Top 5 url visit
-df1.groupBy("path").count().sort(desc("count")).show(5, false)
-
-//Top 5 unique host
-val uniqueHostCount = df1.select("host").distinct().count()
-println(s"Number of unique hosts: $uniqueHostCount")
-
 //Count of 404 responses 
 val count404 = df1.filter($"status" === 404).count()
 println(s"Count of 404 Response Codes: $count404")
