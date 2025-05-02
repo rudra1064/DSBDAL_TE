@@ -1,0 +1,46 @@
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.{Column, SparkSession}
+import org.apache.spark.sql.functions.{regexp_extract, sum, col, to_date, udf, to_timestamp, desc, dayofyear, year}
+
+val spark = SparkSession.builder().appName("WebLog").master("local[*]").getOrCreate()
+val df = spark.read.text("/home/Datasets/weblog.csv")
+df.printSchema()
+df.show(3, false)
+
+//Finding Pattern Using Regular Expression
+val df1 = df.select(
+  regexp_extract($"value", """^([^(\s|,)]+)""", 1).alias("host"),
+  regexp_extract($"value", """^.*\[(\d\d/\w{3}/\d{4}:\d{2}:\d{2}:\d{2})""", 1).as("timestamp"),
+  regexp_extract($"value", """^.*\w+\s+([^\s]+)\s+HTTP.*""", 1).as("path"),
+  regexp_extract($"value", """^.*,([^\s]+)$""", 1).cast("int").alias("status")
+)
+df1.show(5, false)
+df1.printSchema()
+
+//Finding and removing null Values
+val bad_rows = df1.filter($"host".isNull || $"timestamp".isNull || $"path".isNull || $"status".isNull)
+println("Bad Rows are " + bad_rows.count())
+
+val cleaned_df = df1.na.drop()
+println("The count of null value : " + cleaned_df.filter($"host".isNull || $"timestamp".isNull || $"path".isNull || $"status".isNull).count())
+println("Before : " + df1.count() + " | After : " + cleaned_df.count())
+
+//Formating date
+val month_map = Map("Jan" -> 1, "Feb" -> 2, "Mar" -> 3, "Apr" -> 4, "May" -> 5, "Jun" -> 6, "Jul" -> 7, "Aug" -> 8, "Sep" -> 9, "Oct" -> 10, "Nov" -> 11, "Dec" -> 12)
+def parse_clf_time(s: String) = {
+  "%3$s-%2$s-%1$s %4$s:%5$s:%6$s".format(s.substring(0,2), month_map(s.substring(3,6)), s.substring(7,11), s.substring(12,14), s.substring(15,17), s.substring(18))
+}
+val toTimestamp = udf[String, String](parse_clf_time(_))
+val logs_df = cleaned_df.select($"*", to_timestamp(toTimestamp($"timestamp")).alias("time")).drop("timestamp")
+logs_df.printSchema()
+logs_df.show(2)
+
+//Top 5 host
+df1.groupBy("host").count().sort(desc("count")).show(10, false)
+
+//Top 5 url visit
+df1.groupBy("path").count().sort(desc("count")).show(5, false)
+
+//Top 5 unique host
+val uniqueHostCount = df1.select("host").distinct().count()
+println(s"Number of unique hosts: $uniqueHostCount")
