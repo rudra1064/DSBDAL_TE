@@ -1,3 +1,11 @@
+/*
+Problem Statement No. 05
+Write a Scala Program to process a log file of a system and perform following analytics on the given dataset.
+(I) Display the list of top 10 frequent hosts.
+(II) Display the list of top 5 URLs or paths
+(III) Display the number of unique Hosts
+*/
+
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.{Column, SparkSession}
 import org.apache.spark.sql.functions.{regexp_extract, sum, col, to_date, udf, to_timestamp, desc, dayofyear, year}
