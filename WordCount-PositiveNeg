@@ -1,0 +1,37 @@
+/*Problem Statement No. 17
+1. Write a Scala program that counts the number of occurrences of each word in the given input file using Spark
+framework.
+2. Write a Scala Program to find out if the number is Positive, Negative or Zero.
+*/
+
+import org.apache.spark.{SparkConf,SparkContext}
+
+val conf = new SparkConf()
+  .setAppName("LocalWordCountApp")
+  .setMaster("local[*]")
+
+val sc = new SparkContext(conf)
+val textf = sc.textFile("/home/Desktop/info.txt")
+
+//Word Count
+val words = textf.flatMap(line => line.toLowerCase.trim.split("\\s+"))
+val wordPairs = words.map(word => (word, 1))
+val wordCounts = wordPairs.reduceByKey(_ + _)
+
+wordCounts.map { case (word, count) => s"$word,$count" }.saveAsTextFile("/temp/output")
+println("Word Counts:")
+
+wordCounts.collect().foreach { case (word, count) => println(s"Word: $word, Count: $count")}
+
+val total=wordCounts.count()
+println(s"Total Count : $total")
+
+//positive negative zero 
+val input = scala.io.StdIn.readDouble()
+if (input > 0) {
+        println("The number is Positive.")
+      } else if (input < 0) {
+        println("The number is Negative.")
+      } else {
+        println("The number is Zero.")
+      }
