@@ -1,0 +1,34 @@
+/*Problem Statement No. 18
+1. Write a Scala program that counts the number of occurrences of each word in the given input file using Spark
+framework.
+2. Write a Scala Program to find out the largest of two numbers.
+*/
+
+import org.apache.spark.{SparkConf,SparkContext}
+
+val conf = new SparkConf()
+  .setAppName("LocalWordCountApp")
+  .setMaster("local[*]")
+
+val sc = new SparkContext(conf)
+val textf = sc.textFile("/home/Desktop/info.txt")
+
+//Word Count
+val words = textf.flatMap(line => line.toLowerCase.trim.split("\\s+"))
+val wordPairs = words.map(word => (word, 1))
+val wordCounts = wordPairs.reduceByKey(_ + _)
+
+wordCounts.map { case (word, count) => s"$word,$count" }.saveAsTextFile("/temp/output")
+println("Word Counts:")
+
+wordCounts.collect().foreach { case (word, count) => println(s"Word: $word, Count: $count")}
+
+val total=wordCounts.count()
+println(s"Total Count : $total")
+
+// largest between Two No 
+val a=scala.io.StdIn.readDouble()
+val b=scala.io.StdIn.readDouble()
+
+val largest= a if (a>b) else b
+println(s"Largest : $largest")
